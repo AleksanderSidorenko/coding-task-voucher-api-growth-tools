@@ -1,0 +1,30 @@
+version: '3.4'
+
+services:
+  mongo:
+    image: mongo:3.6
+    ports:
+      - "27017:27017"
+    networks:
+      - test
+
+  vouchers-web-api:
+    container_name: vouchers-web-api
+    image: vouchers.webapi:latest
+    entrypoint: /bin/bash
+    command: ./wait-for-it.sh mongo:27017 -t 30 -- ./Vouchers.WebApi
+    networks:
+      - test
+    ports:
+      - "5000:5000"
+    
+  integration:
+    container_name: vouchers-integration-tests
+    image: vouchers.integration-tests:latest
+    entrypoint: /bin/bash
+    command: ./wait-for-it.sh vouchers-web-api:5000 -t 30 -- dotnet vstest ./Vouchers.IntegrationTests.dll
+    networks:
+      - test
+
+networks:
+  test:
